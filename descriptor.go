@@ -10,18 +10,17 @@ import (
 
 //go:embed data/character.json
 var npc []byte
+var npcDescriptors []string
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
+	if err := json.Unmarshal(npc, &npcDescriptors); err != nil {
+        panic(err)
+	}
 }
 
-func Descriptor(context.Context) (string, error) {
-	var npcDesc []string
-	if err := json.Unmarshal(npc, &npcDesc); err != nil {
-		return "", err
-	}
-
-	return choose(npcDesc), nil
+func Descriptor(context.Context) string {
+	return choose(npcDescriptors)
 }
 
 func choose(items []string) string {
