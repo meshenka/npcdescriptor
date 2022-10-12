@@ -15,7 +15,7 @@ var npcDescriptors []string
 func init() {
 	rand.Seed(time.Now().UnixNano())
 	if err := json.Unmarshal(npc, &npcDescriptors); err != nil {
-        panic(err)
+		panic(err)
 	}
 }
 

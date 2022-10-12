@@ -25,9 +25,9 @@ func run() error {
 	)
 	defer cancel()
 
-	desc1:= npcgenerator.Descriptor(ctx)
-	desc2:= npcgenerator.Descriptor(ctx)
-	desc3:= npcgenerator.Descriptor(ctx)
+	desc1 := npcgenerator.Descriptor(ctx)
+	desc2 := npcgenerator.Descriptor(ctx)
+	desc3 := npcgenerator.Descriptor(ctx)
 	fmt.Printf("This character can be described as %s, %s and %s\n", desc1, desc2, desc3)
 	return nil
 }
