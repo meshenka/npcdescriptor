@@ -1,2 +1,4 @@
 cmd/cli/*
 !cmd/cli/main.go
+
+cli
