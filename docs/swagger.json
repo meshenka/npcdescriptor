@@ -1,0 +1,43 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API for generating random NPC descriptors.",
+        "title": "NPC Descriptor API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/api/descriptors": {
+            "get": {
+                "description": "returns three random NPC descriptors as a JSON list",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get NPC descriptors",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.DescriptorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "api.DescriptorResponse": {
+            "type": "object",
+            "properties": {
+                "descriptors": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}
