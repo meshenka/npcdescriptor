@@ -1,0 +1,36 @@
+# fly.toml app configuration file generated for nimble-holy-meadow-800 on 2025-04-04T22:17:05+02:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'npcdescriptor'
+primary_region = 'cdg'
+
+[env]
+  LOG_LEVEL = 'info'
+  APPLICATION_HTTP_ADDR = '0.0.0.0:8080'
+
+[build]
+  [build.args]
+    GO_VERSION = '1.26'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[http_service.headers]]
+  for = '/api/*'
+  [http_service.headers.values]
+    Access-Control-Allow-Origin = '*'
+    Access-Control-Allow-Methods = 'GET, POST, PUT, DELETE, OPTIONS'
+    Access-Control-Allow-Headers = 'Content-Type, Authorization'
+
+[[vm]]
+  memory = '256mb'
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 256

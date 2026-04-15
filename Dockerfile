@@ -1,28 +1,48 @@
-# Build stage
-FROM golang:1.26-alpine AS builder
+# NOTE: build binary
+FROM golang:1.26-bookworm AS builder
+
+RUN apt update && apt upgrade -y && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy dependency files
-COPY go.mod go.sum ./
-RUN go mod download
-
-# Copy source code
 COPY . .
 
-# Build API binary
-RUN CGO_ENABLED=0 GOOS=linux go build -o api ./cmd/api
+RUN  go mod download && go mod verify
 
-# Run stage
-FROM alpine:latest
+RUN mkdir -p /bin
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -v -o /bin/api ./cmd/api/main.go
+
+# NOTE: build frontend
+FROM node:18-alpine AS frontend
+
+RUN npm install -g pnpm
 
 WORKDIR /app
 
-# Copy binary from builder
-COPY --from=builder /app/api .
+COPY package.json pnpm-lock.yaml* ./
 
-# Default port
-EXPOSE 8080
+RUN pnpm install --frozen-lockfile
 
-# Run API
-CMD ["./api"]
+# Copy the rest of the application
+COPY . .
+
+# Build the application
+RUN pnpm run build
+
+FROM scratch
+
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+# force rebuild for this part
+ARG BUILD_DATE
+LABEL rebuild_trigger=$BUILD_DATE
+COPY --from=builder /bin/api /api
+
+COPY --from=builder /app/public/index.html /public/index.html
+COPY --from=frontend /app/public/*.bundle.js /public/
+COPY --from=frontend /app/public/styles.css /public/styles.css
+
+EXPOSE 8080 
+
+CMD [ "/api" ]
