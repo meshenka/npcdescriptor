@@ -37,8 +37,11 @@ func run() error {
 	mux := http.NewServeMux()
 	api.RegisterRoutes(mux)
 
-	port := cmd.GetEnv("PORT", "8080")
+	// Serve static files from /public
+	fs := http.FileServer(http.Dir("./public"))
+	mux.Handle("/", fs)
 
+	port := cmd.GetEnv("PORT", "8080")
 	srv := &http.Server{
 		Addr:              ":" + port,
 		Handler:           mux,
