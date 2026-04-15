@@ -25,7 +25,7 @@ module.exports = {
     ],
   },
   resolve: {
-    modules: [path.resolve(__dirname, 'node_modules')],
+    modules: [path.join(__dirname, 'node_modules')],
     extensions: ['.tsx', '.ts', '.js'],
     fallback: {
       "fs": false,

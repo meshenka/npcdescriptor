@@ -15,6 +15,9 @@ const App: React.FC = () => {
 
     try {
       const response = await fetch('/api/descriptors');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data: DescriptorResponse = await response.json();
       setDescriptors(data.descriptors);
     } catch (err) {

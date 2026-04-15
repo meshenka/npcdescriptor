@@ -1,0 +1,4 @@
+# No packages in this workspace, just a root project.
+# This file is used to configure pnpm behavior.
+allowedBuiltDependencies:
+  - unrs-resolver
