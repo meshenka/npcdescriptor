@@ -74,4 +74,46 @@ describe('App Component', () => {
       expect(screen.getByText(/Failed to fetch descriptors/i)).toBeInTheDocument();
     });
   });
+
+  test('fetches with correct query parameter n', async () => {
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({ descriptors: ['Stoic'] }),
+    } as any);
+
+    render(<App />);
+    const input = screen.getByLabelText(/Count \(1-10\):/i);
+    const button = screen.getByRole('button', { name: /Generate Descriptors/i });
+
+    // Change input to 5
+    fireEvent.change(input, { target: { value: '5' } });
+    fireEvent.click(button);
+
+    expect(fetchSpy).toHaveBeenCalledWith('/api/descriptors?n=5');
+  });
+
+  test('copies descriptors to clipboard and shows success message', async () => {
+    const mockDescriptors = ['Brave', 'Cunning'];
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({ descriptors: mockDescriptors }),
+    } as any);
+
+    const writeTextMock = jest.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, {
+      clipboard: {
+        writeText: writeTextMock,
+      },
+    });
+
+    render(<App />);
+    const genButton = screen.getByRole('button', { name: /Generate Descriptors/i });
+    fireEvent.click(genButton);
+
+    const copyButton = await screen.findByRole('button', { name: /Copy All/i });
+    fireEvent.click(copyButton);
+
+    expect(writeTextMock).toHaveBeenCalledWith('Brave, Cunning');
+    expect(await screen.findByText(/Copied!/i)).toBeInTheDocument();
+  });
 });
