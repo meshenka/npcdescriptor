@@ -16,7 +16,16 @@ info:
 paths:
   /api/descriptors:
     get:
-      description: returns three random NPC descriptors as a JSON list
+      description: returns random NPC descriptors as a JSON list. Optional query param
+        'n' (1-10) sets count (default 3).
+      parameters:
+      - default: 3
+        description: Number of descriptors
+        in: query
+        maximum: 10
+        minimum: 1
+        name: "n"
+        type: integer
       produces:
       - application/json
       responses:

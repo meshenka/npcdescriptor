@@ -17,11 +17,22 @@ const docTemplate = `{
     "paths": {
         "/api/descriptors": {
             "get": {
-                "description": "returns three random NPC descriptors as a JSON list",
+                "description": "returns random NPC descriptors as a JSON list. Optional query param 'n' (1-10) sets count (default 3).",
                 "produces": [
                     "application/json"
                 ],
                 "summary": "Get NPC descriptors",
+                "parameters": [
+                    {
+                        "maximum": 10,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 3,
+                        "description": "Number of descriptors",
+                        "name": "n",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
