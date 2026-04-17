@@ -30,21 +30,6 @@ func init() {
 	locales["fr"] = fr
 }
 
-// Descriptor returns a random descriptor in English (default).
-func Descriptor(ctx context.Context) string {
-	return DescriptorWithLocale(ctx, "en")
-}
-
-// DescriptorWithLocale returns a random descriptor for the given locale.
-// Falls back to "en" if locale is not found.
-func DescriptorWithLocale(ctx context.Context, locale string) string {
-	descriptors := DescriptorsWithLocale(ctx, locale, 1)
-	if len(descriptors) == 0 {
-		return ""
-	}
-	return descriptors[0]
-}
-
 // DescriptorsWithLocale returns n unique random descriptors for the given locale.
 // Falls back to "en" if locale is not found.
 // If n is greater than the total number of available descriptors, all descriptors are returned.

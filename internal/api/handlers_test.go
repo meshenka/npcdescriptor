@@ -7,14 +7,17 @@ import (
 	"testing"
 
 	"github.com/meshenka/npcgenerator/internal/api"
+	"github.com/meshenka/npcgenerator/internal/app"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestGetDescriptorsHandler(t *testing.T) {
 	mux := http.NewServeMux()
-	api.RegisterRoutes(mux)
+	application := app.NewApplication()
+	api.RegisterRoutes(mux, application)
 
 	t.Run("default (en)", func(t *testing.T) {
+		n := 3
 		req := httptest.NewRequest("GET", "/api/descriptors", nil)
 		w := httptest.NewRecorder()
 
@@ -26,7 +29,7 @@ func TestGetDescriptorsHandler(t *testing.T) {
 		var resp api.DescriptorResponse
 		err := json.Unmarshal(w.Body.Bytes(), &resp)
 		assert.NoError(t, err)
-		assert.Len(t, resp.Descriptors, 3)
+		assert.Len(t, resp.Descriptors, n)
 		for _, desc := range resp.Descriptors {
 			assert.NotEmpty(t, desc)
 		}
@@ -68,5 +71,24 @@ func TestGetDescriptorsHandler(t *testing.T) {
 			assert.False(t, seen[desc], "Duplicate descriptor found in API response: %s", desc)
 			seen[desc] = true
 		}
+	})
+
+	t.Run("invalid n (too high)", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/api/descriptors?n=15", nil)
+		w := httptest.NewRecorder()
+
+		mux.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("invalid n (not a number)", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/api/descriptors?n=abc", nil)
+		w := httptest.NewRecorder()
+
+		mux.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Contains(t, w.Body.String(), "invalid n parameter")
 	})
 }

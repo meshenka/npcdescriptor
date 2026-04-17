@@ -8,7 +8,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/meshenka/npcgenerator"
+	"github.com/meshenka/npcgenerator/internal/app"
+	"github.com/meshenka/npcgenerator/internal/app/query"
 )
 
 func main() {
@@ -22,9 +23,6 @@ func run() error {
 	n := flag.Int("n", 3, "Number of descriptors to generate")
 	flag.Parse()
 
-	if *n < 1 || *n > 10 {
-	        return fmt.Errorf("n must be between 1 and 10")
-	}
 	ctx, cancel := signal.NotifyContext(
 		context.Background(),
 		syscall.SIGHUP,
@@ -34,9 +32,13 @@ func run() error {
 	)
 	defer cancel()
 
-	descriptors := npcgenerator.DescriptorsWithLocale(ctx, *lang, *n)
-	if len(descriptors) == 0 {
-		return fmt.Errorf("no descriptors available")
+	application := app.NewApplication()
+	descriptors, err := application.Queries.GetDescriptors.Handle(ctx, query.GetDescriptors{
+		Lang: *lang,
+		N:    *n,
+	})
+	if err != nil {
+		return err
 	}
 
 	var joined strings.Builder
