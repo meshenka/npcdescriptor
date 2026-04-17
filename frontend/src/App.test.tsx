@@ -75,7 +75,7 @@ describe('App Component', () => {
     });
   });
 
-  test('fetches with correct query parameter n', async () => {
+  test('fetches with correct query parameter n and default lang', async () => {
     fetchSpy.mockResolvedValue({
       ok: true,
       json: jest.fn().mockResolvedValue({ descriptors: ['Stoic'] }),
@@ -89,7 +89,45 @@ describe('App Component', () => {
     fireEvent.change(input, { target: { value: '5' } });
     fireEvent.click(button);
 
-    expect(fetchSpy).toHaveBeenCalledWith('/api/descriptors?n=5');
+    expect(fetchSpy).toHaveBeenCalledWith('/api/descriptors?n=5&lang=en');
+  });
+
+  test('switches language and fetches with correct lang parameter', async () => {
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({ descriptors: ['Stoïque'] }),
+    } as any);
+
+    render(<App />);
+    
+    // Verify initial state
+    const enButton = screen.getByRole('button', { name: 'English' });
+    const frButton = screen.getByRole('button', { name: 'Français' });
+    expect(enButton).toHaveAttribute('aria-pressed', 'true');
+    expect(frButton).toHaveAttribute('aria-pressed', 'false');
+
+    // Switch to French
+    fireEvent.click(frButton);
+    expect(enButton).toHaveAttribute('aria-pressed', 'false');
+    expect(frButton).toHaveAttribute('aria-pressed', 'true');
+
+    // Check UI strings updated to French
+    expect(screen.getByText(/Descripteurs de PNJ/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Nombre \(1-10\) :/i)).toBeInTheDocument();
+    const genButton = screen.getByRole('button', { name: /Générer les descripteurs/i });
+    expect(genButton).toBeInTheDocument();
+
+    // Fetch in French
+    fireEvent.click(genButton);
+    expect(fetchSpy).toHaveBeenCalledWith('/api/descriptors?n=3&lang=fr');
+
+    await waitFor(() => {
+      expect(screen.getByText('Stoïque')).toBeInTheDocument();
+    });
+
+    // Switch back to English
+    fireEvent.click(enButton);
+    expect(screen.getByText(/NPC Descriptors/i)).toBeInTheDocument();
   });
 
   test('copies descriptors to clipboard and shows success message', async () => {

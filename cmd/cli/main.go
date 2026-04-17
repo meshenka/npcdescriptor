@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os/signal"
 	"syscall"
@@ -16,6 +17,9 @@ func main() {
 }
 
 func run() error {
+	lang := flag.String("lang", "en", "Language to use (en|fr)")
+	flag.Parse()
+
 	ctx, cancel := signal.NotifyContext(
 		context.Background(),
 		syscall.SIGHUP,
@@ -25,9 +29,15 @@ func run() error {
 	)
 	defer cancel()
 
-	desc1 := npcgenerator.Descriptor(ctx)
-	desc2 := npcgenerator.Descriptor(ctx)
-	desc3 := npcgenerator.Descriptor(ctx)
-	fmt.Printf("This character can be described as %s, %s and %s\n", desc1, desc2, desc3)
+	desc1 := npcgenerator.DescriptorWithLocale(ctx, *lang)
+	desc2 := npcgenerator.DescriptorWithLocale(ctx, *lang)
+	desc3 := npcgenerator.DescriptorWithLocale(ctx, *lang)
+
+	switch *lang {
+	case "fr":
+		fmt.Printf("Ce personnage peut être décrit comme étant %s, %s et %s\n", desc1, desc2, desc3)
+	default:
+		fmt.Printf("This character can be described as %s, %s and %s\n", desc1, desc2, desc3)
+	}
 	return nil
 }

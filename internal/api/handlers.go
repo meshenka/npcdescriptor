@@ -15,9 +15,10 @@ type DescriptorResponse struct {
 
 // GetDescriptorsHandler returns random NPC descriptors.
 // @Summary Get NPC descriptors
-// @Description returns random NPC descriptors as a JSON list. Optional query param 'n' (1-10) sets count (default 3).
+// @Description returns random NPC descriptors as a JSON list. Optional query param 'n' (1-10) sets count (default 3). 'lang' sets locale (default 'en').
 // @Produce  json
 // @Param n query int false "Number of descriptors" default(3) minimum(1) maximum(10)
+// @Param lang query string false "Locale" default("en")
 // @Success 200 {object} DescriptorResponse
 // @Router /api/descriptors [get]
 func GetDescriptorsHandler(w http.ResponseWriter, r *http.Request) {
@@ -36,9 +37,14 @@ func GetDescriptorsHandler(w http.ResponseWriter, r *http.Request) {
 		n = 10
 	}
 
+	lang := r.URL.Query().Get("lang")
+	if lang == "" {
+		lang = "en"
+	}
+
 	descriptors := make([]string, n)
 	for i := 0; i < n; i++ {
-		descriptors[i] = npcgenerator.Descriptor(ctx)
+		descriptors[i] = npcgenerator.DescriptorWithLocale(ctx, lang)
 	}
 
 	res := DescriptorResponse{
