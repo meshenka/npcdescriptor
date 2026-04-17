@@ -11,6 +11,7 @@ import (
 
 	"github.com/meshenka/npcgenerator/cmd"
 	"github.com/meshenka/npcgenerator/internal/api"
+	"github.com/meshenka/npcgenerator/internal/app"
 )
 
 // @title NPC Descriptor API
@@ -35,7 +36,8 @@ func run() error {
 	defer cancel()
 
 	mux := http.NewServeMux()
-	api.RegisterRoutes(mux)
+	application := app.NewApplication()
+	api.RegisterRoutes(mux, application)
 
 	// Serve static files from /public
 	fs := http.FileServer(http.Dir("public"))

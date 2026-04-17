@@ -5,7 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/meshenka/npcgenerator"
+	"github.com/meshenka/npcgenerator/internal/app"
+	"github.com/meshenka/npcgenerator/internal/app/query"
 )
 
 // DescriptorResponse represents the JSON response for the descriptor endpoint.
@@ -13,7 +14,15 @@ type DescriptorResponse struct {
 	Descriptors []string `json:"descriptors"`
 }
 
-// GetDescriptorsHandler returns random NPC descriptors.
+type DescriptorsHandler struct {
+	app app.Application
+}
+
+func NewDescriptorsHandler(app app.Application) *DescriptorsHandler {
+	return &DescriptorsHandler{app: app}
+}
+
+// GetDescriptors returns random NPC descriptors.
 // @Summary Get NPC descriptors
 // @Description returns random NPC descriptors as a JSON list. Optional query param 'n' (1-10) sets count (default 3). 'lang' sets locale (default 'en').
 // @Produce  json
@@ -21,28 +30,28 @@ type DescriptorResponse struct {
 // @Param lang query string false "Locale" default("en")
 // @Success 200 {object} DescriptorResponse
 // @Router /api/descriptors [get]
-func GetDescriptorsHandler(w http.ResponseWriter, r *http.Request) {
+func (h *DescriptorsHandler) GetDescriptors(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	n := 3
 	if nStr := r.URL.Query().Get("n"); nStr != "" {
-		if val, err := strconv.Atoi(nStr); err == nil {
-			n = val
+		val, err := strconv.Atoi(nStr)
+		if err != nil {
+			http.Error(w, "invalid n parameter", http.StatusBadRequest)
+			return
 		}
-	}
-
-	if n < 1 {
-		n = 1
-	}
-	if n > 10 {
-		n = 10
+		n = val
 	}
 
 	lang := r.URL.Query().Get("lang")
-	if lang == "" {
-		lang = "en"
-	}
 
-	descriptors := npcgenerator.DescriptorsWithLocale(ctx, lang, n)
+	descriptors, err := h.app.Queries.GetDescriptors.Handle(ctx, query.GetDescriptors{
+		Lang: lang,
+		N:    n,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	res := DescriptorResponse{
 		Descriptors: descriptors,

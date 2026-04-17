@@ -21,8 +21,8 @@ frontend-install: node_modules ## install frontend dependencies
 frontend-build: public/main.bundle.js ## compile frontend code
 
 build: frontend-build ## build cli and api
-	go build -o cli cmd/cli/main.go
-	go build -o api cmd/api/main.go
+	go build -o dist/cli cmd/cli/main.go
+	go build -o dist/api cmd/api/main.go
 
 test: frontend-test backend-test ## Run all tests
 
