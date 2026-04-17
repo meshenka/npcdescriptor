@@ -38,20 +38,50 @@ func Descriptor(ctx context.Context) string {
 // DescriptorWithLocale returns a random descriptor for the given locale.
 // Falls back to "en" if locale is not found.
 func DescriptorWithLocale(ctx context.Context, locale string) string {
+	descriptors := DescriptorsWithLocale(ctx, locale, 1)
+	if len(descriptors) == 0 {
+		return ""
+	}
+	return descriptors[0]
+}
+
+// DescriptorsWithLocale returns n unique random descriptors for the given locale.
+// Falls back to "en" if locale is not found.
+// If n is greater than the total number of available descriptors, all descriptors are returned.
+func DescriptorsWithLocale(ctx context.Context, locale string, n int) []string {
 	descriptors, ok := locales[locale]
 	if !ok {
 		descriptors = locales["en"]
 	}
-	return choose(descriptors)
-}
 
-func choose(items []string) string {
-	if len(items) == 0 {
-		return ""
+	if n <= 0 {
+		return nil
 	}
-	i, err := rand.Int(rand.Reader, big.NewInt(int64(len(items))))
-	if err != nil {
-		panic(err)
+
+	count := len(descriptors)
+	if n > count {
+		n = count
 	}
-	return items[i.Int64()]
+
+	indices := make([]int, count)
+	for i := range indices {
+		indices[i] = i
+	}
+
+	// Shuffle indices
+	for i := count - 1; i > 0; i-- {
+		jBig, err := rand.Int(rand.Reader, big.NewInt(int64(i+1)))
+		if err != nil {
+			// If random fails, we stop shuffling and return what we have
+			break
+		}
+		j := int(jBig.Int64())
+		indices[i], indices[j] = indices[j], indices[i]
+	}
+
+	res := make([]string, 0, n)
+	for i := 0; i < n; i++ {
+		res = append(res, descriptors[indices[i]])
+	}
+	return res
 }

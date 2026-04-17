@@ -49,4 +49,24 @@ func TestGetDescriptorsHandler(t *testing.T) {
 			assert.NotEmpty(t, desc)
 		}
 	})
+
+	t.Run("uniqueness", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/api/descriptors?n=10", nil)
+		w := httptest.NewRecorder()
+
+		mux.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		var resp api.DescriptorResponse
+		err := json.Unmarshal(w.Body.Bytes(), &resp)
+		assert.NoError(t, err)
+		assert.Len(t, resp.Descriptors, 10)
+
+		seen := make(map[string]bool)
+		for _, desc := range resp.Descriptors {
+			assert.False(t, seen[desc], "Duplicate descriptor found in API response: %s", desc)
+			seen[desc] = true
+		}
+	})
 }

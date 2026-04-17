@@ -1,4 +1,2 @@
-cli
-api
 node_modules
 public/*.bundle.js*
