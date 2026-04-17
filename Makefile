@@ -5,6 +5,10 @@ fix: ## fix backend code
 	golangci-lint run --fix ./...
 	go fix ./...
 
+go-update: ## update go dependencies
+	go get -u $$(go list ./... | grep -v /node_modules)
+	go mod tidy
+
 node_modules: package.json pnpm-lock.yaml
 	pnpm install
 	touch node_modules
