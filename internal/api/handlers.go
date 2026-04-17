@@ -42,10 +42,7 @@ func GetDescriptorsHandler(w http.ResponseWriter, r *http.Request) {
 		lang = "en"
 	}
 
-	descriptors := make([]string, n)
-	for i := 0; i < n; i++ {
-		descriptors[i] = npcgenerator.DescriptorWithLocale(ctx, lang)
-	}
+	descriptors := npcgenerator.DescriptorsWithLocale(ctx, lang, n)
 
 	res := DescriptorResponse{
 		Descriptors: descriptors,

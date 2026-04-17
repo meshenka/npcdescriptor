@@ -44,11 +44,10 @@ describe('App Component', () => {
         expect(screen.getByText(d)).toBeInTheDocument();
       });
     });
-
-    expect(button).not.toBeDisabled();
   });
 
   test('displays error message on fetch failure', async () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     fetchSpy.mockRejectedValue(new Error('API Error'));
 
     render(<App />);
@@ -58,9 +57,11 @@ describe('App Component', () => {
     await waitFor(() => {
       expect(screen.getByText(/Failed to fetch descriptors/i)).toBeInTheDocument();
     });
+    consoleSpy.mockRestore();
   });
 
   test('displays error message on HTTP error status', async () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     fetchSpy.mockResolvedValue({
       ok: false,
       status: 500,
@@ -73,6 +74,7 @@ describe('App Component', () => {
     await waitFor(() => {
       expect(screen.getByText(/Failed to fetch descriptors/i)).toBeInTheDocument();
     });
+    consoleSpy.mockRestore();
   });
 
   test('fetches with correct query parameter n and default lang', async () => {
@@ -90,6 +92,9 @@ describe('App Component', () => {
     fireEvent.click(button);
 
     expect(fetchSpy).toHaveBeenCalledWith('/api/descriptors?n=5&lang=en');
+    
+    // Wait for state updates to finish
+    await waitFor(() => expect(button).not.toBeDisabled());
   });
 
   test('switches language and fetches with correct lang parameter', async () => {
@@ -123,6 +128,7 @@ describe('App Component', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Stoïque')).toBeInTheDocument();
+      expect(genButton).not.toBeDisabled();
     });
 
     // Switch back to English

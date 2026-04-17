@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/meshenka/npcgenerator"
@@ -18,8 +19,12 @@ func main() {
 
 func run() error {
 	lang := flag.String("lang", "en", "Language to use (en|fr)")
+	n := flag.Int("n", 3, "Number of descriptors to generate")
 	flag.Parse()
 
+	if *n < 1 || *n > 10 {
+	        return fmt.Errorf("n must be between 1 and 10")
+	}
 	ctx, cancel := signal.NotifyContext(
 		context.Background(),
 		syscall.SIGHUP,
@@ -29,15 +34,32 @@ func run() error {
 	)
 	defer cancel()
 
-	desc1 := npcgenerator.DescriptorWithLocale(ctx, *lang)
-	desc2 := npcgenerator.DescriptorWithLocale(ctx, *lang)
-	desc3 := npcgenerator.DescriptorWithLocale(ctx, *lang)
+	descriptors := npcgenerator.DescriptorsWithLocale(ctx, *lang, *n)
+	if len(descriptors) == 0 {
+		return fmt.Errorf("no descriptors available")
+	}
+
+	var joined strings.Builder
+	for i, d := range descriptors {
+		if i > 0 {
+			if i == len(descriptors)-1 {
+				if *lang == "fr" {
+					joined.WriteString(" et ")
+				} else {
+					joined.WriteString(" and ")
+				}
+			} else {
+				joined.WriteString(", ")
+			}
+		}
+		joined.WriteString(d)
+	}
 
 	switch *lang {
 	case "fr":
-		fmt.Printf("Ce personnage peut être décrit comme étant %s, %s et %s\n", desc1, desc2, desc3)
+		fmt.Printf("Ce personnage peut être décrit comme étant %s\n", joined.String())
 	default:
-		fmt.Printf("This character can be described as %s, %s and %s\n", desc1, desc2, desc3)
+		fmt.Printf("This character can be described as %s\n", joined.String())
 	}
 	return nil
 }
