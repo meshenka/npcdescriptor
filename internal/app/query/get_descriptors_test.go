@@ -17,6 +17,13 @@ func TestGetDescriptorsHandler_Handle(t *testing.T) {
 		res, err := h.Handle(ctx, q)
 		assert.NoError(t, err)
 		assert.Len(t, res, 3)
+
+		seen := make(map[string]bool)
+		for _, d := range res {
+			assert.NotEmpty(t, d)
+			assert.False(t, seen[d], "Found duplicate descriptor: %s", d)
+			seen[d] = true
+		}
 	})
 
 	t.Run("success fr", func(t *testing.T) {
