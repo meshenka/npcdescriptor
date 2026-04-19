@@ -80,6 +80,12 @@ func TestGetDescriptorsHandler(t *testing.T) {
 		mux.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+
+		var resp api.ErrorResponse
+		err := json.Unmarshal(w.Body.Bytes(), &resp)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, resp.Error)
 	})
 
 	t.Run("invalid n (not a number)", func(t *testing.T) {
@@ -89,6 +95,11 @@ func TestGetDescriptorsHandler(t *testing.T) {
 		mux.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
-		assert.Contains(t, w.Body.String(), "invalid n parameter")
+		assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+
+		var resp api.ErrorResponse
+		err := json.Unmarshal(w.Body.Bytes(), &resp)
+		assert.NoError(t, err)
+		assert.Contains(t, resp.Error, "invalid n parameter")
 	})
 }

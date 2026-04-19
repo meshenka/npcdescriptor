@@ -7,6 +7,7 @@ import (
 
 	"github.com/meshenka/npcgenerator/internal/app"
 	"github.com/meshenka/npcgenerator/internal/app/query"
+	"github.com/meshenka/npcgenerator/internal/logging"
 )
 
 // DescriptorResponse represents the JSON response for the descriptor endpoint.
@@ -36,7 +37,7 @@ func (h *DescriptorsHandler) GetDescriptors(w http.ResponseWriter, r *http.Reque
 	if nStr := r.URL.Query().Get("n"); nStr != "" {
 		val, err := strconv.Atoi(nStr)
 		if err != nil {
-			http.Error(w, "invalid n parameter", http.StatusBadRequest)
+			renderError(w, "invalid n parameter", http.StatusBadRequest)
 			return
 		}
 		n = val
@@ -49,7 +50,7 @@ func (h *DescriptorsHandler) GetDescriptors(w http.ResponseWriter, r *http.Reque
 		N:    n,
 	})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		renderError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -57,12 +58,8 @@ func (h *DescriptorsHandler) GetDescriptors(w http.ResponseWriter, r *http.Reque
 		Descriptors: descriptors,
 	}
 
-	data, err := json.Marshal(res)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write(data)
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		logging.Ctx(r.Context()).Error("failed to encode response", logging.Err(err))
+	}
 }

@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -12,6 +12,7 @@ import (
 	"github.com/meshenka/npcgenerator/cmd"
 	"github.com/meshenka/npcgenerator/internal/api"
 	"github.com/meshenka/npcgenerator/internal/app"
+	"github.com/meshenka/npcgenerator/internal/logging"
 )
 
 // @title NPC Descriptor API
@@ -20,8 +21,13 @@ import (
 // @host localhost:8080
 // @BasePath /
 func main() {
+	// Initialize structured logging
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	if err := run(); err != nil {
-		log.Fatalf("Fatal error: %v", err)
+		slog.Error("Fatal error", logging.Err(err))
+		os.Exit(1)
 	}
 }
 
@@ -46,22 +52,27 @@ func run() error {
 	port := cmd.GetEnv("PORT", "8080")
 	srv := &http.Server{
 		Addr:              ":" + port,
-		Handler:           mux,
+		Handler:           api.MuxMiddleware(mux),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      15 * time.Second,
 		IdleTimeout:       60 * time.Second,
 	}
 
+	errCh := make(chan error, 1)
 	go func() {
-		fmt.Printf("Starting server on http://localhost:%s\n", port)
+		slog.Info("Starting server", slog.String("url", "http://localhost:"+port))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err)
+			errCh <- err
 		}
 	}()
 
-	<-ctx.Done()
-	fmt.Println("Shutting down server...")
+	select {
+	case err := <-errCh:
+		return err
+	case <-ctx.Done():
+		slog.Info("Shutting down server...")
+	}
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCancel()

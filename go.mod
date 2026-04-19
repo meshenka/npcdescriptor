@@ -3,6 +3,7 @@ module github.com/meshenka/npcgenerator
 go 1.26
 
 require (
+	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.8.1
 	github.com/swaggo/swag v1.16.6
 )
