@@ -17,7 +17,7 @@ paths:
   /api/descriptors:
     get:
       description: returns random NPC descriptors as a JSON list. Optional query param
-        'n' (1-10) sets count (default 3).
+        'n' (1-10) sets count (default 3). 'lang' sets locale (default 'en').
       parameters:
       - default: 3
         description: Number of descriptors
@@ -26,6 +26,11 @@ paths:
         minimum: 1
         name: "n"
         type: integer
+      - default: '"en"'
+        description: Locale
+        in: query
+        name: lang
+        type: string
       produces:
       - application/json
       responses:
