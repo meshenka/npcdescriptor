@@ -13,6 +13,7 @@ describe('App Component', () => {
 
   beforeEach(() => {
     fetchSpy = jest.spyOn(global, 'fetch');
+    localStorage.clear();
   });
 
   afterEach(() => {

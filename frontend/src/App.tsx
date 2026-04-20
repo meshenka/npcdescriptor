@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Locale, translations } from './i18n';
 import usFlag from './assets/us.png';
 import frFlag from './assets/fr.png';
@@ -8,15 +8,46 @@ interface DescriptorResponse {
 }
 
 const App: React.FC = () => {
-  const [locale, setLocale] = useState<Locale>('en');
+  const [locale, setLocale] = useState<Locale>(() => {
+    try {
+      const saved = localStorage.getItem('npc_locale');
+      return (saved === 'en' || saved === 'fr') ? saved : 'en';
+    } catch (e) {
+      return 'en';
+    }
+  });
   const [descriptors, setDescriptors] = useState<string[]>([]);
-  const [count, setCount] = useState<number>(3);
+  const [count, setCount] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('npc_count');
+      const parsed = parseInt(saved || '');
+      return (!isNaN(parsed) && parsed >= 1 && parsed <= 10) ? parsed : 3;
+    } catch (e) {
+      return 3;
+    }
+  });
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [copied, setCopied] = useState<boolean>(false);
   const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const t = translations[locale];
+  const t = useMemo(() => translations[locale], [locale]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('npc_locale', locale);
+    } catch (e) {
+      // Ignore storage errors
+    }
+  }, [locale]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('npc_count', count.toString());
+    } catch (e) {
+      // Ignore storage errors
+    }
+  }, [count]);
 
   useEffect(() => {
     return () => {
@@ -26,7 +57,8 @@ const App: React.FC = () => {
     };
   }, []);
 
-  const fetchDescriptors = async (): Promise<void> => {
+  const fetchDescriptors = useCallback(async (): Promise<void> => {
+    const startTime = Date.now();
     setLoading(true);
     setError('');
     setCopied(false);
@@ -40,6 +72,13 @@ const App: React.FC = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data: DescriptorResponse = await response.json();
+      
+      // Prevent blink by ensuring at least 300ms loading state
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 300) {
+        await new Promise(resolve => setTimeout(resolve, 300 - elapsed));
+      }
+      
       setDescriptors(data.descriptors);
     } catch (err) {
       setError(t.fetchError);
@@ -47,7 +86,7 @@ const App: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [count, locale, t.fetchError]);
 
   const copyToClipboard = async () => {
     const text = descriptors.join(', ');
