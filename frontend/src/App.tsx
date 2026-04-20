@@ -7,6 +7,11 @@ interface DescriptorResponse {
   descriptors: string[];
 }
 
+interface HistoryEntry {
+  id: string;
+  descriptors: string[];
+}
+
 const App: React.FC = () => {
   const [locale, setLocale] = useState<Locale>(() => {
     try {
@@ -16,7 +21,25 @@ const App: React.FC = () => {
       return 'en';
     }
   });
-  const [descriptors, setDescriptors] = useState<string[]>([]);
+  const [history, setHistory] = useState<HistoryEntry[]>(() => {
+    try {
+      const saved = localStorage.getItem('npc_history');
+      if (!saved) return [];
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.every(entry => 
+        entry && typeof entry === 'object' && 
+        typeof entry.id === 'string' && 
+        Array.isArray(entry.descriptors) && 
+        entry.descriptors.every((d: any) => typeof d === 'string')
+      )) {
+        return parsed.slice(0, 10);
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [descriptors, setDescriptors] = useState<string[]>(() => history[0]?.descriptors || []);
   const [count, setCount] = useState<number>(() => {
     try {
       const saved = localStorage.getItem('npc_count');
@@ -50,6 +73,14 @@ const App: React.FC = () => {
   }, [count]);
 
   useEffect(() => {
+    try {
+      localStorage.setItem('npc_history', JSON.stringify(history));
+    } catch (e) {
+      // Ignore storage errors
+    }
+  }, [history]);
+
+  useEffect(() => {
     return () => {
       if (copyTimeoutRef.current) {
         clearTimeout(copyTimeoutRef.current);
@@ -80,6 +111,7 @@ const App: React.FC = () => {
       }
       
       setDescriptors(data.descriptors);
+      setHistory(prev => [{ id: Date.now().toString(), descriptors: data.descriptors }, ...prev].slice(0, 10));
     } catch (err) {
       setError(t.fetchError);
       console.error(err);
@@ -171,27 +203,46 @@ const App: React.FC = () => {
         {loading ? t.loading : t.generateBtn}
       </button>
 
-      {descriptors.length > 0 && (
-        <div className="sentence-container">
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            {descriptors.map((d, i) => (
-              <li key={i} className="sentence-text" style={{ marginBottom: '0.5rem' }}>
-                {d}
-              </li>
-            ))}
-          </ul>
-          <button onClick={copyToClipboard} className="btn" style={{ marginTop: '1rem', backgroundColor: '#4CAF50', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
-            </svg>
-            {copied ? t.copied : t.copyBtn}
-          </button>
-        </div>
-      )}
+      <div className="sentence-container">
+        {descriptors.length > 0 ? (
+          <>
+            <ul style={{ listStyle: 'none', padding: 0 }}>
+              {descriptors.map((d, i) => (
+                <li key={i} className="sentence-text" style={{ marginBottom: '0.5rem' }}>
+                  {d}
+                </li>
+              ))}
+            </ul>
+            <button onClick={copyToClipboard} className="btn" style={{ marginTop: '1rem', backgroundColor: '#4CAF50', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+              </svg>
+              {copied ? t.copied : t.copyBtn}
+            </button>
+          </>
+        ) : (
+          <p style={{ textAlign: 'center', color: '#999', fontStyle: 'italic' }}>
+            {/* Empty state placeholder */}
+          </p>
+        )}
+      </div>
 
       {error && (
         <div className="error-container">
           <p>{error}</p>
+        </div>
+      )}
+
+      {history.length > 1 && (
+        <div className="history-container" style={{ marginTop: '2rem', borderTop: '1px solid #ccc', paddingTop: '1rem', width: '100%', maxWidth: '500px' }}>
+          <h3 style={{ marginBottom: '1rem' }}>{t.historyTitle}</h3>
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            {history.slice(1).map((entry) => (
+              <li key={entry.id} style={{ marginBottom: '0.5rem', padding: '0.5rem', borderBottom: '1px solid #eee', fontSize: '0.9rem', color: '#666' }}>
+                {entry.descriptors.join(', ')}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
